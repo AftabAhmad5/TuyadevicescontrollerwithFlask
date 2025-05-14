@@ -1,0 +1,720 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Home Dashboard</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background-color: #111827;
+            color: #e5e7eb;
+        }
+
+        .card {
+            transition: transform 0.3s ease;
+            background-color: #1f2937;
+            border-radius: 16px;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+        }
+
+        .device-status {
+            position: relative;
+            display: inline-block;
+            width: 15px;
+            height: 15px;
+            border-radius: 50%;
+        }
+
+        .device-on {
+            background-color: #10B981;
+            box-shadow: 0 0 10px #10B981;
+        }
+
+        .device-off {
+            background-color: #EF4444;
+        }
+
+        .thermometer {
+            width: 40px;
+            height: 120px;
+            border-radius: 20px 20px 0 0;
+            border: 3px solid #9CA3AF;
+            position: relative;
+            margin: 0 auto;
+            background: #1f2937;
+            overflow: hidden;
+        }
+
+        .thermometer-fill {
+            position: absolute;
+            bottom: 0;
+            width: 100%;
+            background: linear-gradient(to top, #F87171, #EF4444);
+            transition: height 0.5s ease;
+        }
+
+        .thermometer-mark {
+            position: absolute;
+            width: 100%;
+            border-top: 1px solid #9CA3AF;
+            left: 0;
+        }
+
+        .timer-progress {
+            height: 5px;
+            background-color: #374151;
+            border-radius: 3px;
+            margin-top: 5px;
+        }
+
+        .timer-fill {
+            height: 100%;
+            background-color: #4ade80;
+            border-radius: 3px;
+            transition: width 1s linear;
+        }
+
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 46px;
+            height: 26px;
+        }
+
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #374151;
+            transition: .4s;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 18px;
+            width: 18px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .4s;
+        }
+
+        input:checked + .slider {
+            background-color: #10B981;
+        }
+
+        input:checked + .slider:before {
+            transform: translateX(20px);
+        }
+
+        .slider.round {
+            border-radius: 34px;
+        }
+
+        .slider.round:before {
+            border-radius: 50%;
+        }
+
+        .light-mode {
+            background-color: #f3f4f6;
+            color: #1f2937;
+        }
+
+        .light-mode .card {
+            background-color: white;
+        }
+
+        .light-mode .thermometer {
+            background: white;
+        }
+
+        .light-mode .timer-progress {
+            background-color: #e5e7eb;
+        }
+
+        /* Weather widget styles */
+        .weather-info {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .temperature {
+            font-size: 4rem;
+            font-weight: bold;
+            margin-right: 1rem;
+        }
+
+        .weather-icon {
+            font-size: 3rem;
+        }
+
+        .hourly-forecast {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 1rem;
+        }
+
+        .hourly-item {
+            text-align: center;
+            padding: 0.5rem;
+            border-radius: 8px;
+            background-color: #374151;
+        }
+
+        /* Daylight simulation styles */
+        .sun-icon {
+            width: 50px;
+            height: 50px;
+            margin: 0 auto;
+        }
+
+        .sunrise-icon {
+            transform: rotate(45deg);
+            opacity: 0.7;
+        }
+
+        .sunset-icon {
+            transform: rotate(135deg);
+            opacity: 0.7;
+        }
+
+        .night-icon {
+            transform: rotate(180deg);
+            opacity: 0.5;
+        }
+
+        /* Dark/Light mode */
+        .light-mode .sun-icon {
+            filter: invert(1);
+        }
+
+        @media (max-width: 768px) {
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body class="min-h-screen p-0">
+    <div class="min-h-screen py-8 px-4 md:px-8">
+        <!-- Header with date/time and user info -->
+        <div class="flex justify-between items-center mb-8">
+            <div>
+                <div class="header-date" id="current-date">Monday, 24 Dec</div>
+                <div class="header-time" id="current-time">10:25 AM</div>
+            </div>
+            <div class="flex items-center space-x-4">
+                <button id="darkModeToggle" class="p-3 rounded-full bg-gray-700 hover:bg-gray-600 text-white">
+                    <i class="fas fa-sun"></i>
+                </button>
+                <a href="/daylight_config" class="flex items-center space-x-2 bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded-lg">
+                    <i class="fas fa-sun"></i>
+                    <span>Daylight Config</span>
+                </a>
+                <a href="/register" class="flex items-center space-x-2 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg">
+                    <i class="fas fa-plus"></i>
+                    <span>Add Device</span>
+                </a>
+            </div>
+        </div>
+
+        <!-- Main content -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <!-- Left column -->
+            <div class="lg:col-span-2 space-y-6">
+                <!-- Weather Widget -->
+                <div class="card p-6">
+                    <div class="flex justify-between items-start mb-4">
+                        <div>
+                            <h2 class="text-2xl font-bold" id="location-display">London</h2>
+                            <div class="weather-condition" id="weather-desc">Cloudy</div>
+                        </div>
+                        <div class="temperature" id="weather-temp">
+                            {% if weather %}
+                            {{ weather.temp }}
+                            {% else %}
+                            22°C
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="hourly-forecast">
+                        <div class="hourly-item">
+                            <div>1PM</div>
+                            <div><i class="fas fa-cloud-sun"></i></div>
+                            <div>20°</div>
+                        </div>
+                        <div class="hourly-item">
+                            <div>2PM</div>
+                            <div><i class="fas fa-cloud-sun"></i></div>
+                            <div>21°</div>
+                        </div>
+                        <div class="hourly-item">
+                            <div>3PM</div>
+                            <div><i class="fas fa-cloud"></i></div>
+                            <div>20°</div>
+                        </div>
+                        <div class="hourly-item">
+                            <div>4PM</div>
+                            <div><i class="fas fa-cloud"></i></div>
+                            <div>19°</div>
+                        </div>
+                        <div class="hourly-item">
+                            <div>5PM</div>
+                            <div><i class="fas fa-cloud"></i></div>
+                            <div>18°</div>
+                        </div>
+                        <div class="hourly-item">
+                            <div>6PM</div>
+                            <div><i class="fas fa-cloud"></i></div>
+                            <div>17°</div>
+                        </div>
+                        <div class="hourly-item">
+                            <div>7PM</div>
+                            <div><i class="fas fa-cloud"></i></div>
+                            <div>16°</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Highlights section -->
+                <div class="card p-6">
+                    <h2 class="text-xl font-bold mb-4">Today's Highlights</h2>
+                    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                        <div class="highlight-card">
+                            <div class="text-gray-400 mb-2">Feels Like</div>
+                            <div class="highlight-value">25°C</div>
+                        </div>
+                        <div class="highlight-card">
+                            <div class="text-gray-400 mb-2">Humidity</div>
+                            <div class="highlight-value" id="weather-humidity">
+                                {% if weather %}
+                                {{ weather.humidity }}
+                                {% else %}
+                                48%
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="highlight-card">
+                            <div class="text-gray-400 mb-2">Wind Status</div>
+                            <div class="highlight-value" id="weather-wind">
+                                {% if weather %}
+                                {{ weather.wind }}
+                                {% else %}
+                                12 km/h
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="highlight-card">
+                            <div class="text-gray-400 mb-2">Pressure</div>
+                            <div class="highlight-value" id="weather-pressure">
+                                {% if weather %}
+                                {{ weather.pressure }}
+                                {% else %}
+                                1013 hPa
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Daylight Simulation Status -->
+                <div class="card p-6">
+                    <h2 class="text-xl font-bold mb-4">Daylight Simulation Status</h2>
+                    <div id="lighting-status" class="flex items-center justify-between">
+                        <div>
+                            <div class="text-2xl font-bold" id="current-state">
+                                {% if lighting_state %}
+                                    {% if lighting_state.state == 'night' %}Night{% endif %}
+                                    {% if lighting_state.state == 'sunrise' %}Sunrise{% endif %}
+                                    {% if lighting_state.state == 'day' %}Daytime{% endif %}
+                                    {% if lighting_state.state == 'sunset' %}Sunset{% endif %}
+                                {% else %}
+                                    Daytime
+                                {% endif %}
+                            </div>
+                            <div class="text-gray-400" id="brightness-level">
+                                {% if lighting_state %}
+                                    Brightness: {{ lighting_state.brightness }}%
+                                {% else %}
+                                    Brightness: 100%
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="flex items-center">
+                            <div class="w-16 h-16 bg-yellow-400 rounded-full p-2 sun-icon" id="sun-icon">
+                                <div class="w-10 h-10 bg-yellow-300 rounded-full"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Smart Devices -->
+                <div class="card p-6">
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 class="text-xl font-bold">Smart Devices</h2>
+                        <a href="/register" class="text-indigo-400 hover:text-indigo-300 text-sm">View All</a>
+                    </div>
+                    
+                    <div id="tuya-devices" class="space-y-4">
+                        {% for device in devices %}
+                        <div class="device-item flex justify-between items-center p-4 rounded-lg bg-gray-800">
+                            <div class="flex items-center">
+                                <span class="device-status {% if device.status == 1 %}device-on{% else %}device-off{% endif %} mr-3"></span>
+                                <div>
+                                    <div class="font-medium">{{ device.name }}</div>
+                                    <div class="text-sm text-gray-400">{{ device.type }} • {{ device.location }}</div>
+                                </div>
+                            </div>
+                            <div class="flex items-center">
+                                {% if device.status == 1 %}
+                                <span class="text-sm text-gray-400 mr-3">
+                                    Turns off in 
+                                    <span class="timer-countdown" data-end="{{ device.timer }}">6:00:00</span>
+                                </span>
+                                <div class="timer-progress w-20">
+                                    <div class="timer-fill" style="width: 100%"></div>
+                                </div>
+                                {% endif %}
+                                <label class="switch ml-4">
+                                    <input type="checkbox" class="device-toggle" data-device-id="{{ device.id }}" {% if device.status == 1 %}checked{% endif %}>
+                                    <span class="slider round"></span>
+                                </label>
+                            </div>
+                        </div>
+                        {% else %}
+                        <div class="p-4 text-gray-400 text-center bg-gray-800 rounded-lg">
+                            No smart devices registered
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right column -->
+            <div class="space-y-6">
+                <!-- Indoor Temperature Widget -->
+                <div class="card p-6">
+                    <h2 class="text-xl font-bold mb-4 text-center">Indoor Temperature</h2>
+                    <div class="flex items-center justify-center space-x-8">
+                        <div class="thermometer">
+                            <div class="thermometer-fill" style="height: 60%;"></div>
+                            <div class="thermometer-mark" style="bottom: 25%;"></div>
+                            <div class="thermometer-mark" style="bottom: 50%;"></div>
+                            <div class="thermometer-mark" style="bottom: 75%;"></div>
+                        </div>
+                        <div>
+                            <div class="text-4xl font-bold mb-2" id="current-temp">23°C</div>
+                            <div class="text-sm text-gray-400">Humidity: <span id="current-humidity">48%</span></div>
+                            <div class="text-sm text-gray-400">Last updated: <span id="last-updated">Just now</span></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Radio Station Card -->
+                <div class="card p-6">
+                    <h2 class="text-xl font-bold mb-4">Radio Stations</h2>
+                    <div id="radio-content">
+                        <div class="mb-4">
+                            <select id="genre-select" class="w-full p-3 bg-gray-800 text-white border-none rounded-lg focus:ring-2 focus:ring-indigo-500">
+                                <option value="jazz">Jazz</option>
+                                <option value="pop">Pop</option>
+                                <option value="rock">Rock</option>
+                                <option value="classical">Classical</option>
+                                <option value="hiphop">Hip Hop</option>
+                            </select>
+                        </div>
+                        <div class="station-list space-y-2 max-h-40 overflow-y-auto mb-4">
+                            <div class="station-item p-3 rounded-lg cursor-pointer">
+                                <div class="font-medium">Smooth Jazz 24/7</div>
+                                <div class="text-sm text-gray-400">Jazz</div>
+                            </div>
+                            <div class="station-item p-3 rounded-lg cursor-pointer">
+                                <div class="font-medium">Jazz Cafe</div>
+                                <div class="text-sm text-gray-400">Jazz</div>
+                            </div>
+                            <div class="station-item p-3 rounded-lg cursor-pointer">
+                                <div class="font-medium">Classic Jazz</div>
+                                <div class="text-sm text-gray-400">Jazz</div>
+                            </div>
+                        </div>
+                        <div class="player p-4 rounded-lg">
+                            <div class="flex justify-between items-center">
+                                <div>
+                                    <div class="text-sm mb-1 text-gray-400" id="now-playing">Now Playing:</div>
+                                    <div class="font-medium" id="station-name">Smooth Jazz 24/7</div>
+                                </div>
+                                <div class="flex space-x-4">
+                                    <button class="text-xl hover:text-indigo-400"><i class="fas fa-step-backward"></i></button>
+                                    <button class="text-2xl hover:text-indigo-400"><i class="fas fa-play"></i></button>
+                                    <button class="text-xl hover:text-indigo-400"><i class="fas fa-step-forward"></i></button>
+                                </div>
+                            </div>
+                            <div class="mt-3">
+                                <input type="range" class="w-full" min="0" max="100" value="60">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Registered Devices Card -->
+                <div class="card p-6">
+                    <h2 class="text-xl font-bold mb-4">Device Inventory</h2>
+                    <div id="registered-devices">
+                        <div class="mb-4">
+                            <select id="device-type-filter" class="w-full p-3 bg-gray-800 text-white border-none rounded-lg focus:ring-2 focus:ring-indigo-500">
+                                <option value="all">All Devices</option>
+                                <option value="bulb">Bulbs</option>
+                                <option value="plug">Plugs</option>
+                                <option value="switch">Switches</option>
+                                <option value="sensor">Sensors</option>
+                            </select>
+                        </div>
+                        
+                        <div class="device-list space-y-2 max-h-40 overflow-y-auto">
+                            {% for device in devices %}
+                            <div class="device p-3 rounded-lg">
+                                <div class="flex justify-between items-center">
+                                    <div>
+                                        <span class="font-medium">{{ device.name }}</span>
+                                    </div>
+                                    <div class="flex items-center space-x-2">
+                                        <span class="badge px-2 py-1 rounded text-xs">{{ device.type }}</span>
+                                        <form action="{{ url_for('delete_device', device_id=device.id) }}" method="post">
+                                            <button type="submit" class="text-red-400 hover:text-red-300">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </form>
+                                    </div>
+                                </div>
+                                <div class="text-xs text-gray-400">ID: {{ device.device_id }}</div>
+                            </div>
+                            {% else %}
+                            <div class="p-4 text-gray-400">No devices registered</div>
+                            {% endfor %}
+                        </div>
+
+                        <div class="mt-4 flex justify-between">
+                            <span class="text-sm text-gray-400">Total devices: {{ devices|length }}</span>
+                            <a href="/register" class="text-sm text-indigo-400 hover:text-indigo-300">+ Add Device</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Update date and time
+            function updateDateTime() {
+                const now = new Date();
+                const options = { weekday: 'long', day: 'numeric', month: 'short' };
+                document.getElementById('current-date').innerText = now.toLocaleDateString('en-US', options);
+                
+                let hours = now.getHours();
+                const minutes = String(now.getMinutes()).padStart(2, '0');
+                const ampm = hours >= 12 ? 'PM' : 'AM';
+                hours = hours % 12;
+                hours = hours ? hours : 12; // the hour '0' should be '12'
+                document.getElementById('current-time').innerText = `${hours}:${minutes} ${ampm}`;
+            }
+            
+            updateDateTime();
+            setInterval(updateDateTime, 60000); // Update every minute
+            
+            // Device toggle functionality
+            const deviceToggles = document.querySelectorAll('.device-toggle');
+            deviceToggles.forEach(toggle => {
+                toggle.addEventListener('change', function() {
+                    const deviceId = this.getAttribute('data-device-id');
+                    const newStatus = this.checked ? 1 : 0;
+                    
+                    fetch(`/toggle_device/${deviceId}`, {
+                        method: 'POST',
+                        body: JSON.stringify({status: newStatus}),
+                        headers: {
+                            'Content-Type': 'application/json'
+                        }
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.status === 'success') {
+                            const deviceItem = this.closest('.device-item');
+                            const statusIndicator = deviceItem.querySelector('.device-status');
+                            
+                            if (newStatus === 1) {
+                                statusIndicator.classList.remove('device-off');
+                                statusIndicator.classList.add('device-on');
+                                
+                                // Add timer elements if they don't exist
+                                if (!deviceItem.querySelector('.text-sm.text-gray-400.mr-3')) {
+                                    const timerContainer = document.createElement('span');
+                                    timerContainer.className = 'text-sm text-gray-400 mr-3';
+                                    timerContainer.innerHTML = 'Turns off in <span class="timer-countdown">6:00:00</span>';
+                                    
+                                    const progressBar = document.createElement('div');
+                                    progressBar.className = 'timer-progress w-20';
+                                    progressBar.innerHTML = '<div class="timer-fill" style="width: 100%"></div>';
+                                    
+                                    const toggleContainer = this.closest('label');
+                                    toggleContainer.parentElement.insertBefore(timerContainer, toggleContainer);
+                                    toggleContainer.parentElement.insertBefore(progressBar, toggleContainer);
+                                    
+                                    startTimer(deviceId);
+                                } else {
+                                    startTimer(deviceId);
+                                }
+                            } else {
+                                statusIndicator.classList.remove('device-on');
+                                statusIndicator.classList.add('device-off');
+                                
+                                const timerElements = deviceItem.querySelectorAll('.text-sm.text-gray-400.mr-3, .timer-progress');
+                                timerElements.forEach(el => el.remove());
+                            }
+                        }
+                    });
+                });
+            });
+
+         function startTimer(deviceId) {
+    const device = document.querySelector(`.device-toggle[data-device-id="${deviceId}"]`);
+    const parentElement = device.closest('.device-item');
+    
+    const countdownElement = parentElement.querySelector('.timer-countdown');
+    const progressBar = parentElement.querySelector('.timer-fill');
+    
+    if (countdownElement) {
+        // Fetch the daylight configuration
+        fetch('/get_lighting_config')
+            .then(response => response.json())
+            .then(data => {
+                let targetLength = 6; // Default to 6 hours if no config
+                if (data.target_length) {
+                    targetLength = parseInt(data.target_length);
+                }
+                
+                // Update the UI with the new target length
+                countdownElement.innerText = `Turns off in ${targetLength}:00:00`;
+                
+                // Rest of the timer logic
+                let totalSeconds = targetLength * 60 * 60;
+                let hours = Math.floor(totalSeconds / 3600);
+                let minutes = Math.floor((totalSeconds % 3600) / 60);
+                let seconds = totalSeconds % 60;
+                let width = 100;
+                
+                const interval = setInterval(() => {
+                    seconds--;
+                    if (seconds < 0) {
+                        seconds = 59;
+                        minutes--;
+                    }
+                    if (minutes < 0) {
+                        minutes = 59;
+                        hours--;
+                    }
+                    
+                    width = (hours * 3600 + minutes * 60 + seconds) / (targetLength * 3600) * 100;
+                    progressBar.style.width = `${width}%`;
+                    
+                    countdownElement.innerText = `${hours}:${minutes < 10 ? '0' + minutes : minutes}:${seconds < 10 ? '0' + seconds : seconds}`;
+                    
+                    if (hours === 0 && minutes === 0 && seconds === 0) {
+                        clearInterval(interval);
+                        device.click();
+                    }
+                }, 1000);
+            })
+            .catch(error => {
+                console.error('Error fetching daylight config:', error);
+            });
+    }
+}
+            // Simulate thermometer updates
+            setInterval(() => {
+                const tempValue = 20 + Math.random() * 5;
+                const tempRounded = Math.round(tempValue * 10) / 10;
+                const humidity = Math.round(45 + Math.random() * 10);
+                
+                document.getElementById('current-temp').innerText = tempRounded + '°C';
+                document.getElementById('current-humidity').innerText = humidity + '%';
+                document.querySelector('.thermometer-fill').style.height = (tempValue * 3) + '%';
+                document.getElementById('last-updated').innerText = 'Just now';
+            }, 5000);
+
+            // Dark/Light mode toggle
+            document.getElementById('darkModeToggle').addEventListener('click', function() {
+                document.body.classList.toggle('light-mode');
+                const icon = this.querySelector('i');
+                if (document.body.classList.contains('light-mode')) {
+                    icon.className = 'fas fa-moon';
+                    this.classList.remove('bg-gray-700', 'hover:bg-gray-600');
+                    this.classList.add('bg-gray-200', 'hover:bg-gray-300', 'text-gray-800');
+                } else {
+                    icon.className = 'fas fa-sun';
+                    this.classList.remove('bg-gray-200', 'hover:bg-gray-300', 'text-gray-800');
+                    this.classList.add('bg-gray-700', 'hover:bg-gray-600', 'text-white');
+                }
+            });
+
+            // Update lighting status
+            setInterval(updateLightingStatus, 60000); // Update every minute
+
+            function updateLightingStatus() {
+                fetch('/get_lighting_status')
+                    .then(response => response.json())
+                    .then(data => {
+                        document.getElementById('current-state').innerText = 
+                            data.state == 'night' ? 'Night' : 
+                            data.state == 'sunrise' ? 'Sunrise' : 
+                            data.state == 'day' ? 'Daytime' : 
+                            data.state == 'sunset' ? 'Sunset' : 'Daytime';
+                        document.getElementById('brightness-level').innerText = `Brightness: ${data.brightness || 100}%`;
+                        
+                        // Update sun icon based on state
+                        const sunIcon = document.getElementById('sun-icon');
+                        sunIcon.className = 'w-16 h-16 bg-yellow-400 rounded-full p-2 sun-icon';
+                        if (data.state == 'sunrise') {
+                            sunIcon.classList.add('sunrise-icon');
+                        } else if (data.state == 'sunset') {
+                            sunIcon.classList.add('sunset-icon');
+                        } else if (data.state == 'night') {
+                            sunIcon.classList.add('night-icon');
+                        }
+
+                        // Update device states
+                        const devices = document.querySelectorAll('.device-item');
+                        devices.forEach(device => {
+                            const type = device.querySelector('.font-medium').innerText.split(' ')[1];
+                            const toggle = device.querySelector('.device-toggle');
+                            
+                            if (type === 'Bulb') {
+                                toggle.checked = data.state !== 'night';
+                                device.querySelector('.device-status').classList.toggle('device-on', data.state !== 'night');
+                            } else if (type === 'Plug') {
+                                toggle.checked = data.state === 'day';
+                                device.querySelector('.device-status').classList.toggle('device-on', data.state === 'day');
+                            }
+                        });
+                    });
+            }
+        });
+    </script>
+</body>
+</html>

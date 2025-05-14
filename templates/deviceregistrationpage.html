@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register Tuya Device</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+</head>
+<body class="bg-gray-100 min-h-screen">
+    <nav class="bg-blue-600 text-white p-4 shadow-md">
+        <div class="container mx-auto flex justify-between items-center">
+            <h1 class="text-2xl font-bold">Smart Home Dashboard</h1>
+            <div class="flex items-center space-x-4">
+                <a href="/" class="hover:underline">Dashboard</a>
+                <a href="/register" class="hover:underline font-bold">Register Device</a>
+                <button id="darkModeToggle" class="p-2 rounded-full bg-blue-700 hover:bg-blue-800">
+                    <i class="fas fa-moon"></i>
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mx-auto p-4">
+        <div class="max-w-2xl mx-auto bg-white rounded-lg shadow-md p-6">
+            <h2 class="text-2xl font-bold mb-6 text-center">Register New Tuya Device</h2>
+            
+            <form id="deviceForm" class="space-y-6" method="post" action="/register">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label for="deviceName" class="block text-gray-700 mb-2">Device Name</label>
+                        <input type="text" id="deviceName" name="deviceName" required
+                            class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            placeholder="e.g. Living Room Light">
+                    </div>
+                    
+                    <div>
+                        <label for="deviceType" class="block text-gray-700 mb-2">Device Type</label>
+                        <select id="deviceType" name="deviceType" required
+                            class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <option value="">Select Type</option>
+                            <option value="bulb">Bulb</option>
+                            <option value="plug">Plug</option>
+                            <option value="switch">Switch</option>
+                            <option value="sensor">Sensor</option>
+                            <option value="other">Other</option>
+                        </select>
+                    </div>
+                    
+                    <div>
+                        <label for="deviceID" class="block text-gray-700 mb-2">Device ID</label>
+                        <input type="text" id="deviceID" name="deviceID" required
+                            class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            placeholder="e.g. tuya28fd9e7c...">
+                    </div>
+                    
+                    <div>
+                        <label for="localKey" class="block text-gray-700 mb-2">Local Key</label>
+                        <input type="text" id="localKey" name="localKey" required
+                            class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            placeholder="e.g. 3eb5b6d7...">
+                    </div>
+                </div>
+                
+                <div>
+                    <label for="location" class="block text-gray-700 mb-2">Location</label>
+                    <input type="text" id="location" name="location"
+                        class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        placeholder="e.g. Living Room">
+                </div>
+                
+                <div id="extraFields" class="hidden">
+                    <h3 class="text-lg font-semibold mb-4">Additional Configuration</h3>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6" id="bulbFields">
+                        <div>
+                            <label for="supportsDimming" class="block text-gray-700 mb-2">Supports Dimming</label>
+                            <select id="supportsDimming" name="supportsDimming"
+                                class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                <option value="false">No</option>
+                                <option value="true">Yes</option>
+                            </select>
+                        </div>
+                        
+                        <div>
+                            <label for="supportsColorTemp" class="block text-gray-700 mb-2">Supports Color Temperature</label>
+                            <select id="supportsColorTemp" name="supportsColorTemp"
+                                class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                <option value="false">No</option>
+                                <option value="true">Yes</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div id="plugFields" class="hidden">
+                        <div>
+                            <label for="maxPower" class="block text-gray-700 mb-2">Max Power (Watts)</label>
+                            <input type="number" id="maxPower" name="maxPower"
+                                class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                placeholder="e.g. 2000">
+                        </div>
+                    </div>
+                    
+                    <div id="sensorFields" class="hidden">
+                        <div>
+                            <label for="sensorType" class="block text-gray-700 mb-2">Sensor Type</label>
+                            <select id="sensorType" name="sensorType"
+                                class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                <option value="temperature">Temperature</option>
+                                <option value="humidity">Humidity</option>
+                                <option value="motion">Motion</option>
+                                <option value="door">Door/Window</option>
+                                <option value="water">Water Leak</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="flex items-center">
+                    <input type="checkbox" id="autoConnect" name="autoConnect" class="mr-2">
+                    <label for="autoConnect" class="text-gray-700">Connect to device after registration</label>
+                </div>
+                
+                <div class="flex justify-between">
+                    <button type="button" id="testConnection" class="px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        Test Connection
+                    </button>
+                    <div>
+                        <a href="/" class="px-6 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 mr-2">
+                            Cancel
+                        </a>
+                        <button type="submit" class="px-6 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-green-500">
+                            Register Device
+                        </button>
+                    </div>
+                </div>
+            </form>
+            
+            <div id="connectionResult" class="mt-6 p-4 rounded-lg hidden"></div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const deviceTypeSelect = document.getElementById('deviceType');
+            const extraFields = document.getElementById('extraFields');
+            const bulbFields = document.getElementById('bulbFields');
+            const plugFields = document.getElementById('plugFields');
+            const sensorFields = document.getElementById('sensorFields');
+            const testConnectionBtn = document.getElementById('testConnection');
+            const connectionResult = document.getElementById('connectionResult');
+            
+            deviceTypeSelect.addEventListener('change', function() {
+                extraFields.style.display = 'block';
+                bulbFields.style.display = 'none';
+                plugFields.style.display = 'none';
+                sensorFields.style.display = 'none';
+                
+                if (this.value === 'bulb') {
+                    bulbFields.style.display = 'grid';
+                } else if (this.value === 'plug') {
+                    plugFields.style.display = 'block';
+                } else if (this.value === 'sensor') {
+                    sensorFields.style.display = 'block';
+                }
+            });
+            
+            testConnectionBtn.addEventListener('click', function() {
+                const deviceId = document.getElementById('deviceID').value;
+                const localKey = document.getElementById('localKey').value;
+                
+                if (!deviceId || !localKey) {
+                    connectionResult.textContent = 'Please enter Device ID and Local Key';
+                    connectionResult.style.color = 'red';
+                    connectionResult.style.display = 'block';
+                    return;
+                }
+                
+                // Simulate connection test
+                setTimeout(() => {
+                    connectionResult.textContent = 'Connection successful!';
+                    connectionResult.style.color = 'green';
+                    connectionResult.style.display = 'block';
+                }, 1000);
+            });
+            
+            document.getElementById('darkModeToggle').addEventListener('click', function() {
+                document.body.classList.toggle('dark-mode');
+                const icon = this.querySelector('i');
+                if (document.body.classList.contains('dark-mode')) {
+                    icon.className = 'fas fa-sun';
+                } else {
+                    icon.className = 'fas fa-moon';
+                }
+            });
+        });
+    </script>
+</body>
+</html>
